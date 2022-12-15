@@ -35,7 +35,7 @@ void UDoorInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (CurrentRotationTime <= TimeToRotate)
+	if (CurrentRotationTime < TimeToRotate)
 	{
 		if (TriggerBox && GetWorld() && GetWorld()->GetFirstLocalPlayerFromController())
 		{
@@ -50,8 +50,6 @@ void UDoorInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 			}
 			else if (GetOwner()->GetActorRotation() != StartRotation)
 			{
-				if (GetOwner()->GetActorRotation() == FinalRotation)
-					CurrentRotationTime = 0.0f;
 
 				CurrentRotationTime += DeltaTime;
 				const float TimeRatio = FMath::Clamp(CurrentRotationTime / TimeToRotate, 0.0f, 1.0f);
