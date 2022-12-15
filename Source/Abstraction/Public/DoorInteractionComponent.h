@@ -42,4 +42,10 @@ protected:
 	UPROPERTY(EditAnywhere)
 	FRuntimeFloatCurve OpenCurve;
 
+	UFUNCTION()
+		void OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
+	UFUNCTION()
+		void OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
+
+	float DoorOpeningDirection = 0;
 };

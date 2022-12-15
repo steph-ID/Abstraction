@@ -26,7 +26,9 @@ void UDoorInteractionComponent::BeginPlay()
 	FinalRotation = GetOwner()->GetActorRotation() + DesiredRotation;
 	// Ensure TimeToRotate is greater than EPSILON
 	CurrentRotationTime = 0.0f;
-	
+
+	TriggerBox->OnActorBeginOverlap.AddDynamic(this, &UDoorInteractionComponent::OnBeginOverlap);
+	TriggerBox->OnActorEndOverlap.AddDynamic(this, &UDoorInteractionComponent::OnEndOverlap);
 }
 
 
@@ -34,30 +36,66 @@ void UDoorInteractionComponent::BeginPlay()
 void UDoorInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (CurrentRotationTime < TimeToRotate)
+	if (DoorOpeningDirection != 0)
 	{
-		if (TriggerBox && GetWorld() && GetWorld()->GetFirstLocalPlayerFromController())
+		CurrentRotationTime += DeltaTime * DoorOpeningDirection;
+		if (CurrentRotationTime > TimeToRotate)
 		{
-			APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
-			if (PlayerPawn && TriggerBox->IsOverlappingActor(PlayerPawn))
-			{
-				CurrentRotationTime += DeltaTime;
-				const float TimeRatio = FMath::Clamp(CurrentRotationTime / TimeToRotate, 0.0f, 1.0f);
-				const float RotationAlpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
-				const FRotator CurrentRotation = FMath::Lerp(StartRotation, FinalRotation, RotationAlpha);
-				GetOwner()->SetActorRotation(CurrentRotation);
-			}
-			else if (GetOwner()->GetActorRotation() != StartRotation)
-			{
-
-				CurrentRotationTime += DeltaTime;
-				const float TimeRatio = FMath::Clamp(CurrentRotationTime / TimeToRotate, 0.0f, 1.0f);
-				const float RotationAlpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
-				const FRotator CurrentRotation = FMath::Lerp(FinalRotation, StartRotation, RotationAlpha);
-				GetOwner()->SetActorRotation(CurrentRotation);
-			}
+			DoorOpeningDirection = 0;
+			CurrentRotationTime = TimeToRotate;
+		}
+		else if (CurrentRotationTime < 0)
+		{
+			DoorOpeningDirection = 0;
+			CurrentRotationTime = 0;
+		}
+		else
+		{
+			const float TimeRatio = FMath::Clamp(CurrentRotationTime / TimeToRotate, 0.0f, 1.0f);
+			const float RotationAlpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
+			const FRotator CurrentRotation = FMath::Lerp(StartRotation, FinalRotation, RotationAlpha);
+			GetOwner()->SetActorRotation(CurrentRotation);
 		}
 	}
+	//if (CurrentRotationTime < TimeToRotate)
+	//{
+		//if (TriggerBox && GetWorld() && GetWorld()->GetFirstLocalPlayerFromController())
+		//{
+		//	APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
+		//	if (PlayerPawn && TriggerBox->IsOverlappingActor(PlayerPawn))
+		//	{
+		//		//CurrentRotationTime = FMath::Clamp(CurrentRotationTime, 0.0f, TimeToRotate);
+		//		if(CurrentRotationTime < TimeToRotate)
+		//		{
+		//			CurrentRotationTime += DeltaTime;
+		//			const float TimeRatio = FMath::Clamp(CurrentRotationTime / TimeToRotate, 0.0f, 1.0f);
+		//			const float RotationAlpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
+		//			const FRotator CurrentRotation = FMath::Lerp(StartRotation, FinalRotation, RotationAlpha);
+		//			GetOwner()->SetActorRotation(CurrentRotation);
+		//		}
+		//	}
+		//	else if (GetOwner()->GetActorRotation() != StartRotation)
+		//	{
+		//		if (CurrentRotationTime > 0)
+		//		{
+		//			CurrentRotationTime -= DeltaTime;
+		//			const float TimeRatio = FMath::Clamp(CurrentRotationTime / TimeToRotate, 0.0f, 1.0f);
+		//			const float RotationAlpha = OpenCurve.GetRichCurveConst()->Eval(TimeRatio);
+		//			const FRotator CurrentRotation = FMath::Lerp(StartRotation, FinalRotation, RotationAlpha);
+		//			GetOwner()->SetActorRotation(CurrentRotation);
+		//		}
+		//	}
+		//}
+	//}
 }
 
+
+void UDoorInteractionComponent::OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
+	DoorOpeningDirection = 1;
+}
+
+void UDoorInteractionComponent::OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
+	DoorOpeningDirection = -1;
+}
