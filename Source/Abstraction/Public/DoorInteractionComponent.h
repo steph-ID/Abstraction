@@ -8,6 +8,18 @@
 #include "DoorInteractionComponent.generated.h"
 
 class ATriggerBox;
+class IConsoleVariable;
+
+UENUM()
+enum class EDoorState
+{
+	DS_Closed = 0	UMETA(DisplayName = "Closed"),
+	DS_Closing = 1	UMETA(DisplayName = "Closing"),
+	DS_Opening = 2	UMETA(DisplayName = "Opening"),
+	DS_Open = 3	UMETA(DisplayName = "Open"),
+	DS_Locked = 4	UMETA(DisplayName = "Locked"),
+
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ABSTRACTION_API UDoorInteractionComponent : public UActorComponent
@@ -20,6 +32,16 @@ public:
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	DECLARE_EVENT(FDoorInteractionComponent, FOpened)
+	FOpened& OnOpened() { return OpenedEvent; }
+
+	FOpened OpenedEvent;
+
+	void OnDoorOpen();
+
+	static void OnDebugToggled(IConsoleVariable* Var);
+	void DebugDraw();
 
 protected:
 	// Called when the game starts
@@ -43,9 +65,12 @@ protected:
 	FRuntimeFloatCurve OpenCurve;
 
 	UFUNCTION()
-		void OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
+	void OnBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
 	UFUNCTION()
-		void OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
+	void OnEndOverlap(AActor* OverlappedActor, AActor* OtherActor);
 
 	float DoorOpeningDirection = 0;
+
+	UPROPERTY(BlueprintReadOnly)
+	EDoorState DoorState;
 };
